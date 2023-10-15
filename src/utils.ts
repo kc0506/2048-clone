@@ -1,4 +1,3 @@
-import { EMPTYBOARD } from "./App";
 import { TileProps } from "./Tile";
 
 function transposeMatrix<T>(arr: T[][]) {
@@ -20,7 +19,9 @@ function getById<T extends { id: number }>(arr: T[], id: number): T | undefined 
 }
 export { setById, getById };
 
-function tilesToBoard(tiles: TileProps[]) {
+function tilesToBoard(tiles: TileProps[], shape: [number, number]) {
+    const EMPTYBOARD = Array.from(Array(shape[0])).map(() => Array.from(Array(shape[1])));
+
     const board = EMPTYBOARD.map((row) => row.map((_) => ({ id: -1, val: -1 })));
     tiles.forEach(({ pos: [i, j], id, val }) => {
         board[i][j] = { id, val };

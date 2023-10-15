@@ -1,16 +1,13 @@
 
-import { useEffect, useRef, useState, forwardRef, useImperativeHandle, ReactSVG } from 'react';
+import { useMemo, useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import './App.css'
 import { shiftSet, shuffle, tilesToBoard } from './utils';
 import Tile, { Pos, TileProps, pow2 } from './Tile';
 import { moveDown, moveLeft, moveRight, moveUp } from './move';
+import useConfig, { ConfigProvider, DEFAULTCONFIG } from './useConfig';
 
 
 // TODO: dynamic config
-const SIZE = 4;
-const EMPTYBOARD = Array.from(Array(SIZE)).map(() => Array.from(Array(SIZE)))
-
-export { EMPTYBOARD, SIZE }
 
 function getFreePos(board: { id: number, val: number }[][]) {
 	const posPool: Pos[] = [];
@@ -31,17 +28,16 @@ function cleanUpTiles(tiles: TileProps[]) {
 	return [newTiles, addToIdPool] as const
 }
 
-function checkLose(tiles: TileProps[]) {
-	const [, l] = moveLeft({ tiles, silent: true });
-	const [, r] = moveRight({ tiles, silent: true });
-	const [, u] = moveUp({ tiles, silent: true });
-	const [, d] = moveDown({ tiles, silent: true });
+function checkLose(tiles: TileProps[], shape: [number, number]) {
+	const args = { tiles, silent: true, shape } as const;
+	const [, l] = moveLeft(args);
+	const [, r] = moveRight(args);
+	const [, u] = moveUp(args);
+	const [, d] = moveDown(args);
 
 	return !(l || r || u || d);
 }
 
-
-const INITIAL_TILES = 4
 
 type ContainerProps = {
 	lose: boolean,
@@ -51,11 +47,15 @@ type ContainerProps = {
 }
 const Container = forwardRef(function Container({ lose, setLose, setScore }: ContainerProps, ref) {
 
-	const idPool = useRef(new Set<number>(shuffle(EMPTYBOARD.flat(1).flatMap((_, i) => [i, i + EMPTYBOARD.flat().length]))));
-	const posPool = useRef<Pos[]>(shuffle(EMPTYBOARD.flatMap((row, i) => row.map((_, j) => [i, j]))));
+	const idPool = useRef<Set<number>>(null!);
+	const posPool = useRef<Pos[]>(null!);
 
+	const [tiles, setTiles] = useState<TileProps[]>([]);
 
-	const [tiles, setTiles] = useState<TileProps[]>(() => Array.from(Array(INITIAL_TILES)).map(_ => getNewTile()));
+	const { config: { initTiles, shape, gap, containerSize, initVal } } = useConfig();
+	const EMPTYBOARD = useMemo(() => {
+		return Array.from(Array(shape[0])).map(() => Array.from(Array(shape[1])))
+	}, [shape.join(' ')]);
 
 	function reset() {
 		idPool.current = new Set<number>(shuffle(EMPTYBOARD.flat(1).flatMap((_, i) => [i, i + EMPTYBOARD.flat().length])))
@@ -64,15 +64,20 @@ const Container = forwardRef(function Container({ lose, setLose, setScore }: Con
 		setLose(false);
 		setScore(0);
 		requestAnimationFrame(() => {
-			setTiles(Array.from(Array(INITIAL_TILES)).map(_ => getNewTile()));
+			setTiles(Array.from(Array(initTiles)).map(_ => getNewTile()));
 		});
 	}
+
+	useEffect(() => {
+		reset();
+	}, []);
 
 	useImperativeHandle(ref, () => {
 		return {
 			reset,
 		}
 	});
+
 
 
 	function getNewTile(): TileProps {
@@ -86,7 +91,7 @@ const Container = forwardRef(function Container({ lose, setLose, setScore }: Con
 			throw `error: newPos is undefined.` + tiles
 		}
 
-		const newVal = [1, 2][Math.floor(Math.random() * 2)]
+		const newVal = initVal[Math.floor(Math.random() * initVal.length)]
 
 		return {
 			pos: newPos,
@@ -107,7 +112,7 @@ const Container = forwardRef(function Container({ lose, setLose, setScore }: Con
 				let [newTiles, addToIdPool] = cleanUpTiles(tiles);
 				addToIdPool.forEach(id => idPool.current.add(id));
 
-				setLose(checkLose(newTiles));
+				setLose(checkLose(newTiles, shape));
 				return newTiles
 			});
 			running.current = false;
@@ -134,7 +139,7 @@ const Container = forwardRef(function Container({ lose, setLose, setScore }: Con
 			[tiles, addToIdPool] = cleanUpTiles(tiles);
 			addToIdPool.forEach(id => idPool.current.add(id));
 
-			if (checkLose(tiles)) {
+			if (checkLose(tiles, shape)) {
 				setLose(true);
 				return;
 			}
@@ -142,7 +147,7 @@ const Container = forwardRef(function Container({ lose, setLose, setScore }: Con
 		}
 
 		let newTiles: TileProps[], hasMove: boolean;
-		const args = { tiles: tiles, silent: false, idPool: idPool.current } as const;
+		const args = { tiles: tiles, silent: false, idPool: idPool.current, shape } as const;
 		switch (e.key) {
 			case 'ArrowLeft':
 				[newTiles, hasMove] = moveLeft(args);
@@ -160,7 +165,7 @@ const Container = forwardRef(function Container({ lose, setLose, setScore }: Con
 				return;
 		}
 
-		const board = tilesToBoard(newTiles);
+		const board = tilesToBoard(newTiles, shape);
 		posPool.current = getFreePos(board);
 		if (hasMove)
 			newTiles.push(getNewTile());
@@ -181,9 +186,16 @@ const Container = forwardRef(function Container({ lose, setLose, setScore }: Con
 		return () => document.removeEventListener('keydown', f);
 	});
 
+	// console.log(containerSize)
 	// TODO score
-	return <div className="container">
-		<div className="cell-container">
+	return <div className="container" >
+		<div className="cell-container" style={{
+			gridTemplateRows: `repeat(${shape[0]}, 1fr)`,
+			gridTemplateColumns: `repeat(${shape[1]}, 1fr)`,
+			gap,
+			height: containerSize[0],
+			width: containerSize[1],
+		}}>
 			{EMPTYBOARD.flat().map((_, i) => <div className='cell' key={`cell${i}`} />)}
 		</div>
 
@@ -200,19 +212,23 @@ function App() {
 	const ref = useRef<{ reset: () => void }>(null!);
 	const [score, setScore] = useState(0);
 
-	return <div className='app-container'>
-		<div className="header">
-			<div id="newgame" onClick={() => ref.current.reset()}>New Game</div>
-			<div id="score">Score: {score}</div>
-		</div>
-		<Container ref={ref} {...{ lose, setLose, score, setScore }} />
-		{
-			// TODO: lose screen
-			lose && <div style={{ color: 'black' }}>
-				YOU LOSE!!
+	const [config, setConfig] = useState(DEFAULTCONFIG);
+
+	return <ConfigProvider config={config} setConfig={setConfig} >
+		<div className='app-container'>
+			<div className="header">
+				<div id="newgame" onClick={() => ref.current.reset()}>New Game</div>
+				<div id="score">Score: {score}</div>
 			</div>
-		}
-	</div>
+			<Container ref={ref} {...{ lose, setLose, score, setScore }} />
+			{
+				// TODO: lose screen
+				lose && <div style={{ color: 'black' }}>
+					YOU LOSE!!
+				</div>
+			}
+		</div>
+	</ConfigProvider>
 }
 
 export default App

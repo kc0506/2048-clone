@@ -5,10 +5,12 @@ type Args = {
     tiles: TileProps[];
     reverse?: boolean;
     transpose?: boolean;
+
+    shape: [number, number],
 } & ({ silent: true; idPool?: undefined } | { silent: false; idPool: Set<number> });
 
-function move({ tiles, silent, reverse, idPool, transpose }: Args): [TileProps[], boolean] {
-    let board = tilesToBoard(tiles);
+function move({shape, tiles, silent, reverse, idPool, transpose }: Args): [TileProps[], boolean] {
+    let board = tilesToBoard(tiles , shape);
     const newTiles = [...tiles];
 
     if (transpose) board = transposeMatrix(board);

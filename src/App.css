@@ -38,15 +38,15 @@ body {
     & .cell-container {
         border-radius: 5px;
 
-        width: 450px;
+        /* width: 450px; */
         aspect-ratio: 1/1;
         background-color: rgb(187, 173, 160);
 
         padding: 0.875em;
-        gap: 0.875em;
+        /* gap: 0.875em; */
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        grid-template-rows: repeat(4, 1fr);
+        /* grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: repeat(4, 1fr); */
 
         & .cell {
             border-radius: 5px;
