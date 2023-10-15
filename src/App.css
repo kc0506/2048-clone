@@ -9,15 +9,28 @@ body {
     flex-direction: column;
 }
 
-#newgame {
-    background-color: #8f7a66;
-    font-size: 1.125rem;
-    padding: 0.625rem 1.125rem;
-    border-radius: 5px;
-    font-weight: 700;
-    align-self: self-start;
-    margin-bottom: 1rem;
-    cursor: pointer;
+.header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+
+    padding: 1rem 0;
+
+    & #score {
+        color: #8f7a66;
+    }
+
+    & #newgame {
+        background-color: #8f7a66;
+        font-size: 1.125rem;
+        padding: 0.625rem 1.125rem;
+        border-radius: 5px;
+        font-weight: 700;
+        align-self: self-start;
+        cursor: pointer;
+    }
 }
 
 .container {
@@ -41,6 +54,7 @@ body {
         }
     }
     & .tile {
+        user-select: none;
         position: absolute;
         background-color: rgb(238, 228, 218);
         border-radius: 5px;
@@ -48,7 +62,6 @@ body {
         justify-content: center;
         align-items: center;
 
-        font-size: 55px;
         font-weight: 700;
 
         aspect-ratio: 1/1;

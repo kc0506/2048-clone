@@ -5,6 +5,7 @@ const MAX_LEVEL = 20
 const pow2: Record<number, number> = {}
 for (let l = 1, b = 2; l <= MAX_LEVEL; l++, b *= 2)
     pow2[l] = b;
+export {pow2}
 
 
 const bgColors: Record<number, string> = {
@@ -14,6 +15,9 @@ const bgColors: Record<number, string> = {
     4: '#f69664',
     5: '#f77c5f',
     6: '#f75f3b',
+    7: '#edd073',
+    8: '#edcc62',
+    9: '#edc950',
 }
 
 const color: Record<number, string> = {
@@ -58,7 +62,7 @@ function Tile(props: TileProps) {
                     left: `${offsetX}px`,
                     top: `${offsetY}px`,
                     width: `${CELL_SIZE}px`,
-
+                    fontSize: val >= 6 ? '45px' : '55px',
                     color: color[val],
                     backgroundColor: bgColors[val],
                 }}

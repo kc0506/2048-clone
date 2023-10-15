@@ -1,8 +1,8 @@
 
-import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
+import { useEffect, useRef, useState, forwardRef, useImperativeHandle, ReactSVG } from 'react';
 import './App.css'
 import { shiftSet, shuffle, tilesToBoard } from './utils';
-import Tile, { Pos, TileProps } from './Tile';
+import Tile, { Pos, TileProps, pow2 } from './Tile';
 import { moveDown, moveLeft, moveRight, moveUp } from './move';
 
 
@@ -46,8 +46,10 @@ const INITIAL_TILES = 4
 type ContainerProps = {
 	lose: boolean,
 	setLose: React.Dispatch<React.SetStateAction<boolean>>,
+	score: number,
+	setScore: React.Dispatch<React.SetStateAction<number>>,
 }
-const Container = forwardRef(function Container({ lose: lose, setLose }: ContainerProps, ref) {
+const Container = forwardRef(function Container({ lose, setLose, setScore }: ContainerProps, ref) {
 
 	const idPool = useRef(new Set<number>(shuffle(EMPTYBOARD.flat(1).flatMap((_, i) => [i, i + EMPTYBOARD.flat().length]))));
 	const posPool = useRef<Pos[]>(shuffle(EMPTYBOARD.flatMap((row, i) => row.map((_, j) => [i, j]))));
@@ -59,10 +61,13 @@ const Container = forwardRef(function Container({ lose: lose, setLose }: Contain
 		idPool.current = new Set<number>(shuffle(EMPTYBOARD.flat(1).flatMap((_, i) => [i, i + EMPTYBOARD.flat().length])))
 		posPool.current = shuffle(EMPTYBOARD.flatMap((row, i) => row.map((_, j) => [i, j])))
 		setTiles([]);
+		setLose(false);
+		setScore(0);
 		requestAnimationFrame(() => {
 			setTiles(Array.from(Array(INITIAL_TILES)).map(_ => getNewTile()));
 		});
 	}
+
 	useImperativeHandle(ref, () => {
 		return {
 			reset,
@@ -160,6 +165,11 @@ const Container = forwardRef(function Container({ lose: lose, setLose }: Contain
 		if (hasMove)
 			newTiles.push(getNewTile());
 
+		const addScore = newTiles.filter(({ animation }) => animation === 'popup').reduce((prev, { val }) => {
+			return prev + pow2[val];
+		}, 0);
+		setScore(score => score + addScore);
+
 		running.current = true;
 		setTiles(newTiles);
 		timeoutId.current = setTimeout(completeMove, 500);
@@ -188,13 +198,17 @@ function App() {
 
 	const [lose, setLose] = useState(false);
 	const ref = useRef<{ reset: () => void }>(null!);
+	const [score, setScore] = useState(0);
 
 	return <div className='app-container'>
-		<div id="newgame" onClick={() => ref.current.reset()}>New Game</div>
-		<Container ref={ref} lose={lose} setLose={setLose} />
+		<div className="header">
+			<div id="newgame" onClick={() => ref.current.reset()}>New Game</div>
+			<div id="score">Score: {score}</div>
+		</div>
+		<Container ref={ref} {...{ lose, setLose, score, setScore }} />
 		{
 			// TODO: lose screen
-			lose && <div style={{color: 'black'}}>
+			lose && <div style={{ color: 'black' }}>
 				YOU LOSE!!
 			</div>
 		}
