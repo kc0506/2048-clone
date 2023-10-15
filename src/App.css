@@ -1,0 +1,92 @@
+body {
+    background-color: #faf8ef;
+}
+
+.app-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+#newgame {
+    background-color: #8f7a66;
+    font-size: 1.125rem;
+    padding: 0.625rem 1.125rem;
+    border-radius: 5px;
+    font-weight: 700;
+    align-self: self-start;
+    margin-bottom: 1rem;
+    cursor: pointer;
+}
+
+.container {
+    position: relative;
+    & .cell-container {
+        border-radius: 5px;
+
+        width: 450px;
+        aspect-ratio: 1/1;
+        background-color: rgb(187, 173, 160);
+
+        padding: 0.875em;
+        gap: 0.875em;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: repeat(4, 1fr);
+
+        & .cell {
+            border-radius: 5px;
+            background-color: rgba(238, 228, 218, 0.35);
+        }
+    }
+    & .tile {
+        position: absolute;
+        background-color: rgb(238, 228, 218);
+        border-radius: 5px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        font-size: 55px;
+        font-weight: 700;
+
+        aspect-ratio: 1/1;
+        transition: all 0.2s ease;
+    }
+    & .popup {
+        /* scale: 0 0; */
+        animation: popup 0.2s ease;
+        animation-delay: 0.2s;
+        animation-fill-mode: both;
+    }
+    & .appear {
+        animation: appear 0.2s ease;
+        animation-delay: 0.2s;
+        animation-fill-mode: both;
+    }
+}
+
+@keyframes appear {
+    from {
+        scale: 0 0;
+        opacity: 0;
+    }
+
+    to {
+        scale: 1 1;
+        opacity: 1;
+    }
+}
+
+@keyframes popup {
+    0% {
+        scale: 0 0;
+    }
+    50% {
+        scale: 1.2 1.2;
+    }
+    100% {
+        scale: 1 1;
+    }
+}
