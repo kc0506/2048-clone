@@ -64,7 +64,7 @@ function Tile(props: TileProps) {
                     left: `${offsetX}px`,
                     top: `${offsetY}px`,
                     width: `${cellSize}px`,
-                    fontSize: (val >= 6 ? 45 : 55) * (cellSize <= 75 ? 0.75 : 1),
+                    fontSize: (val >= 7 ? 45 : 55) * (cellSize <= 75 ? 0.75 : 1),
                     color: color[val],
                     backgroundColor: bgColors[val],
                 }}

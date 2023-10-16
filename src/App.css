@@ -3,6 +3,8 @@ body {
 }
 
 .app-container {
+    position: relative;
+
     display: flex;
     justify-content: center;
     align-items: center;
@@ -34,6 +36,8 @@ body {
 }
 
 .container {
+    /* border: red 1px solid; */
+    touch-action: none;
     position: relative;
     & .cell-container {
         border-radius: 5px;
@@ -78,6 +82,18 @@ body {
         animation-delay: 0.2s;
         animation-fill-mode: both;
     }
+}
+
+menu.sider {
+    position: absolute;
+    width: 200px;
+    /* transform: translateX(-100%); */
+    right: 100%;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
 }
 
 @keyframes appear {

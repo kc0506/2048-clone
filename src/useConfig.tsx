@@ -1,4 +1,4 @@
-import { ReactNode, createContext, useContext, useEffect } from "react";
+import { ReactNode, createContext, useContext, useEffect, useState } from "react";
 
 type Config = {
     containerSize: [number, number],
@@ -10,28 +10,26 @@ type Config = {
     initTiles: number,
 }
 
-const MAX_CONTAINER_SIZE = [600, 450] as const;
 
 const DEFAULTCONFIG: Omit<Config, 'containerSize'> = {
     gap: 14,
     cellSize: 100,
     shape: [4, 4],
-    initVal: [5,1, 2],
+    initVal: [1, 2],
     initTiles: 4,
 }
 export { DEFAULTCONFIG }
 
-type Props = {
-    children: ReactNode[] | ReactNode,
-    config: typeof DEFAULTCONFIG
-    setConfig: React.Dispatch<React.SetStateAction<typeof DEFAULTCONFIG>>,
-}
 const ConfigContext = createContext<{
     config: typeof DEFAULTCONFIG,
     setConfig: React.Dispatch<React.SetStateAction<typeof DEFAULTCONFIG>>,
-}>(null!);
+} | null>(null);
 
-function ConfigProvider({ children, config, setConfig }: Props) {
+type Props = { children: ReactNode[] | ReactNode, }
+function ConfigProvider({ children, }: Props) {
+
+    const [config, setConfig] = useState(DEFAULTCONFIG);
+
     return <ConfigContext.Provider value={{ config, setConfig }}>
         {children}
     </ConfigContext.Provider>
@@ -41,17 +39,15 @@ export { ConfigProvider }
 function useConfig(): { config: Config } {
     // TODO: modify config
 
-    const { config, setConfig } = useContext(ConfigContext);
+    const MAX_CONTAINER_SIZE = [Math.min(600, document.body.clientWidth), 450] as const;
+
+    const context = useContext(ConfigContext);
+    if (!context)
+        throw Error('ConfigContext used outside provider.')
+
+    const { config, setConfig } = context;
 
     const { gap, cellSize, shape, initTiles } = config;
-
-    // function setCellSize(newCellSize: number) {
-    //     newCellSize = Math.min(newCellSize,
-    //         (MAX_CONTAINER_SIZE[0] - gap * (shape[0] + 1)) / shape[0],
-    //         (MAX_CONTAINER_SIZE[1] - gap * (shape[1] + 1)) / shape[1]
-    //     );
-    //     setConfig({ ...config, cellSize: newCellSize });
-    // }
 
     // TODO: this should not be placed in effect
     useEffect(() => {
@@ -67,10 +63,6 @@ function useConfig(): { config: Config } {
             setConfig({ ...config, initTiles })
     }, [initTiles, shape]);
 
-    // console.log(initTiles);
-
-
-    // console.log(MAX_CONTAINER_SIZE[0] - gap * (shape[0] + 1))
     const containerSize: [number, number] = [
         cellSize * shape[0] + gap * (shape[0] + 1),
         cellSize * shape[1] + gap * (shape[1] + 1),

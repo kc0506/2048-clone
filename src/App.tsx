@@ -1,10 +1,12 @@
 
 import { useMemo, useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import './App.css'
+// import './output.css'
 import { shiftSet, shuffle, tilesToBoard } from './utils';
 import Tile, { Pos, TileProps, pow2 } from './Tile';
 import { moveDown, moveLeft, moveRight, moveUp } from './move';
-import useConfig, { ConfigProvider, DEFAULTCONFIG } from './useConfig';
+import useConfig, { ConfigProvider } from './useConfig';
+import { useDrag } from '@use-gesture/react'
 
 
 // TODO: dynamic config
@@ -38,6 +40,12 @@ function checkLose(tiles: TileProps[], shape: [number, number]) {
 	return !(l || r || u || d);
 }
 
+enum Direction {
+	LEFT,
+	RIGHT,
+	UP,
+	DOWN,
+}
 
 type ContainerProps = {
 	lose: boolean,
@@ -126,7 +134,7 @@ const Container = forwardRef(function Container({ lose, setLose, setScore }: Con
 	// console.log(a,b);
 	// console.log('len: ', tiles.length)
 
-	const handler = (e: KeyboardEvent, tiles: TileProps[]) => {
+	const handler = (dir: Direction, tiles: TileProps[]) => {
 
 		// * pass tiles as parameter so that it can be assigned
 
@@ -146,24 +154,16 @@ const Container = forwardRef(function Container({ lose, setLose, setScore }: Con
 			running.current = false;
 		}
 
-		let newTiles: TileProps[], hasMove: boolean;
+
+		const moveFn = {
+			[Direction.LEFT]: moveLeft,
+			[Direction.RIGHT]: moveRight,
+			[Direction.UP]: moveUp,
+			[Direction.DOWN]: moveDown,
+		} as const
+
 		const args = { tiles: tiles, silent: false, idPool: idPool.current, shape } as const;
-		switch (e.key) {
-			case 'ArrowLeft':
-				[newTiles, hasMove] = moveLeft(args);
-				break;
-			case 'ArrowRight':
-				[newTiles, hasMove] = moveRight(args);
-				break;
-			case 'ArrowUp':
-				[newTiles, hasMove] = moveUp(args);
-				break;
-			case 'ArrowDown':
-				[newTiles, hasMove] = moveDown(args);
-				break;
-			default:
-				return;
-		}
+		const [newTiles, hasMove] = moveFn[dir](args);
 
 		const board = tilesToBoard(newTiles, shape);
 		posPool.current = getFreePos(board);
@@ -181,14 +181,47 @@ const Container = forwardRef(function Container({ lose, setLose, setScore }: Con
 	}
 
 	useEffect(() => {
-		const f = (e: KeyboardEvent) => handler(e, tiles);
+		const f = (e: KeyboardEvent) => {
+
+			const keyMap = [
+				[Direction.LEFT, ['ArrowLeft', 'a', 'A']],
+				[Direction.RIGHT, ['ArrowRight', 'd', 'D']],
+				[Direction.UP, ['ArrowUp', 'w', 'W']],
+				[Direction.DOWN, ['ArrowDown', 's', 'S']],
+			] as const
+			const dirMap: Record<string, Direction | undefined> = Object.fromEntries(
+				keyMap.map(([dir, keys]) => keys.map(key => [key, dir])).flat(1)
+			)
+
+			const dir = dirMap[e.key];
+			if (dir === undefined)
+				return;
+
+			handler(dir, tiles);
+		}
 		document.addEventListener('keydown', f)
 		return () => document.removeEventListener('keydown', f);
 	});
 
+
+	const bind = useDrag(({ swipe }) => {
+		// console.log(swipe[0], swipe[1])
+		if (swipe[0]) {
+			if (swipe[0] === 1)
+				handler(Direction.RIGHT, tiles)
+			if (swipe[0] === -1)
+				handler(Direction.LEFT, tiles)
+		} else {
+			if (swipe[1] === 1)
+				handler(Direction.DOWN, tiles)
+			if (swipe[1] === -1)
+				handler(Direction.UP, tiles)
+		}
+	})
+
 	// console.log(containerSize)
 	// TODO score
-	return <div className="container" >
+	return <div className="container" {...bind()} >
 		<div className="cell-container" style={{
 			gridTemplateRows: `repeat(${shape[0]}, 1fr)`,
 			gridTemplateColumns: `repeat(${shape[1]}, 1fr)`,
@@ -212,10 +245,15 @@ function App() {
 	const ref = useRef<{ reset: () => void }>(null!);
 	const [score, setScore] = useState(0);
 
-	const [config, setConfig] = useState(DEFAULTCONFIG);
 
-	return <ConfigProvider config={config} setConfig={setConfig} >
+	return <ConfigProvider>
 		<div className='app-container'>
+			<menu className='sider'>
+				<input type="range" max={8} min={2} />
+				<input type="range" max={8} min={2} />
+				<input type="range" />
+
+			</menu>
 			<div className="header">
 				<div id="newgame" onClick={() => ref.current.reset()}>New Game</div>
 				<div id="score">Score: {score}</div>

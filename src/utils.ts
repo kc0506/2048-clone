@@ -46,3 +46,21 @@ function shiftSet<T>(set: Set<T>) {
 }
 
 export { shiftSet, shuffle };
+
+type ObjectFromEntries<T extends [string | number, any]> = {
+    [K in T[0]]: T extends [K, any] ? T[1] : never;
+};
+type ArrToUnion<T extends any[]> = T extends [infer A, ...infer B] ? A | ArrToUnion<B> : never;
+
+type FromEntries<T extends any[]> = ArrToUnion<T> extends [string | number, any]
+    ? ObjectFromEntries<ArrToUnion<T>>
+    : {};
+
+function fromEntries<T extends any[]>(arr: T): FromEntries<T> {
+    return {} as FromEntries<T>;
+}
+
+const y: FromEntries<[[1, 2], [3, 4]]> = fromEntries([
+    [1, 2],
+    [3, 4],
+] as const);
