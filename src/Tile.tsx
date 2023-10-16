@@ -52,6 +52,7 @@ function Tile(props: TileProps) {
 
     const { config: { gap, cellSize } } = useConfig();
 
+    // TODO: adjust animation speed with respect of viewport
     try {
         const { animation, val, pos: [i, j] } = props;
 

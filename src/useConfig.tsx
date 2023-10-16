@@ -16,7 +16,7 @@ const DEFAULTCONFIG: Omit<Config, 'containerSize'> = {
     cellSize: 100,
     shape: [4, 4],
     initVal: [1, 2],
-    initTiles: 4,
+    initTiles: 5,
 }
 export { DEFAULTCONFIG }
 
